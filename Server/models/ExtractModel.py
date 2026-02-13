@@ -1,6 +1,9 @@
 import sys
-sys.path.append('../src')
-from utlis import gram_matrix,content_layers, style_layers,content_image
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+from calculateStyle import gram_matrix
+from FeaturesExtraction import style_layers, content_layers
+from data_preparastion import content_image
 
 import tensorflow as tf
 from BuildModel import vgg_layers
