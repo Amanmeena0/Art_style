@@ -1,14 +1,14 @@
-
 import tensorflow as tf
 import sys
+import os
 
-sys.path.append('../models')
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'models'))
 
-from utlis import extractor,tensor_to_image
-
-sys.path.append('../src')
-
-from utlis import style_image, content_image,content_layers,style_layers
+from ExtractModel import extractor
+from pretrained_model import tensor_to_image
+from data_preparastion import style_image, content_image
+from FeaturesExtraction import content_layers, style_layers
 
 
 num_content_layers = len(content_layers)

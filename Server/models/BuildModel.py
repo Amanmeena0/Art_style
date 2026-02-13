@@ -1,6 +1,8 @@
 import sys
-sys.path.append('../src')
-from utlis import style_layers, style_image
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+from FeaturesExtraction import style_layers
+from data_preparastion import style_image
 
 import tensorflow as tf
 
