@@ -21,11 +21,3 @@ style_extractor = vgg_layers(style_layers)
 
 style_outputs = style_extractor(style_image*255)
 
-
-for name, output in zip(style_layers, style_outputs):
-    print(name)
-    print("  shape: ", output.numpy().shape)
-    print("  min: ", output.numpy().min())
-    print("  max: ", output.numpy().max())
-    print("  mean: ", output.numpy().mean())
-    print()
