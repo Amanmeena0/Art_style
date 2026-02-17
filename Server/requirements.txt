@@ -1,5 +1,17 @@
 tensorflow
-
+tensorflow_hub
 matplotlib
-
 numpy
+Pillow
+
+# FastAPI and server
+fastapi
+uvicorn[standard]
+python-multipart
+
+# MongoDB
+pymongo
+python-dotenv
+
+# Optional: for async MongoDB operations
+# motor

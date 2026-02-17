@@ -1,0 +1,3 @@
+bKDT1ghlz0GNLyld
+starboy72900_db_user 
+mongodb+srv://starboy72900_db_user:bKDT1ghlz0GNLyld@cluster0.1ab74lr.mongodb.net/
