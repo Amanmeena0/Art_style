@@ -5,6 +5,3 @@ numpy
 fastapi
 
 
-
-# Optional: for async MongoDB operations
-# motor
