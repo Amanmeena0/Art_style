@@ -1,7 +1,0 @@
-tensorflow
-tensorflow_hub
-matplotlib
-numpy
-fastapi
-
-
