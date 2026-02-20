@@ -4,7 +4,6 @@ import Grid from "@/components/mainGrid";
 
 
 function App() {
- 
 
   return (
     <>
