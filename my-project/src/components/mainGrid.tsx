@@ -57,19 +57,22 @@ const Grid : React.FC = () => {
         formData.append("photo2", photo2);
 
         try{
-            const response = await fetch("http://localhost:5174/", {
+            const response = await fetch("http://localhost:3000/", {
                 method: "POST",
                 body: formData,
             });
 
             if(response.ok){
                 setMessage("Photos uploaded successfully");
+                console.log("Upload succeeded", response);
             } else {
                 setMessage("Upload failed ");
+                console.error("Upload failed", response);
             }
 
-        }catch {
+        }catch (error) {
             setMessage("Server error during upload")
+            console.error("Upload error", error);
         }
     };
 
