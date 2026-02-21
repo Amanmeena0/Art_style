@@ -2,7 +2,7 @@ import tensorflow as tf
 import sys
 import os
 sys.path.insert(0, os.path.dirname(__file__))
-from data_preparastion import content_image, style_image
+from preparastion import content_image, style_image
 
 x = tf.keras.applications.vgg19.preprocess_input(content_image*255)
 x = tf.image.resize(x,(224,  224))

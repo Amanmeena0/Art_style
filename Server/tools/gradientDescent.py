@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'models'))
 
 from ExtractModel import extractor
 from pretrained_model import tensor_to_image
-from data_preparastion import style_image, content_image
+from preparastion import style_image, content_image
 from FeaturesExtraction import content_layers, style_layers
 
 
