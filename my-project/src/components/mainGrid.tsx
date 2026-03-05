@@ -57,55 +57,59 @@ const Grid : React.FC = () => {
         formData.append("photo2", photo2);
 
         try{
-            const response = await fetch("http://localhost:3000/", {
+            console.log("Attempting to connect to http://localhost:8000/upload");
+            const response = await fetch("http://localhost:8000/upload", {
                 method: "POST",
                 body: formData,
             });
 
+            console.log("Response status:", response.status);
+            console.log("Response headers:", response.headers);
+            
             if(response.ok){
                 setMessage("Photos uploaded successfully");
-                console.log("Upload succeeded", response);
             } else {
-                setMessage("Upload failed ");
-                console.error("Upload failed", response);
+                setMessage(`Upload failed - Status: ${response.status}`);
             }
 
         }catch (error) {
-            setMessage("Server error during upload")
+            setMessage(`Server error: ${error instanceof Error ? error.message : "Unknown error"}`);
             console.error("Upload error", error);
         }
+        
     };
 
+
     return(
-        <div className="bg-linear-to-br from-blue-50 to-blue-100 flex-1 h-full overflow-auto p-6">
+        <div className="bg-linear-to-br from-blue-50 to-blue-100 flex-1 overflow-auto">
             {/* Upload Section */}
-            <div className="max-w-6xl mx-auto h-full flex flex-col gap-4">
+            <div className="w-full flex flex-col gap-3 sm:gap-4 md:gap-6 p-3 sm:p-4 md:p-6">
                 
                 {/* Image Upload Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
                     {/* Image 1 Upload */}
-                    <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-blue-200 hover:border-blue-400 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
-                        <h3 className="text-lg font-semibold text-blue-700 mb-4 flex items-center gap-2">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-md sm:shadow-lg p-3 sm:p-4 md:p-6 border-2 border-blue-200 hover:border-blue-400 transition-all duration-300 hover:shadow-lg sm:hover:shadow-xl transform hover:-translate-y-0.5 sm:hover:-translate-y-1 flex flex-col">
+                        <h3 className="text-base sm:text-lg md:text-lg font-semibold text-blue-700 mb-2 sm:mb-3 md:mb-4 flex items-center gap-2">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
-                            Style image
+                            <span className="truncate">Style image</span>
                         </h3>
                         
-                        <label className="flex-1 cursor-pointer">
-                            <div className="border-2 border-dashed border-blue-300 rounded-xl p-4 hover:border-blue-500 transition-colors bg-blue-50 hover:bg-blue-100 flex items-center justify-center min-h-52">
+                        <label className="flex-1 cursor-pointer flex">
+                            <div className="border-2 border-dashed border-blue-300 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-4 hover:border-blue-500 transition-colors bg-blue-50 hover:bg-blue-100 flex items-center justify-center w-full min-h-40 sm:min-h-48 md:min-h-52">
                                 {preview1 ? (
                                     <img
                                         src={preview1}
                                         alt="Preview 1"
-                                        className="max-h-75 max-w-full object-contain rounded-lg animate-fadeIn"
+                                        className="max-h-48 sm:max-h-60 md:max-h-80 max-w-full object-contain rounded-lg animate-fadeIn"
                                     />
                                 ) : (
-                                    <div className="text-center">
-                                        <svg className="mx-auto h-12 w-12 text-blue-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                    <div className="text-center p-2">
+                                        <svg className="mx-auto h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-blue-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                                             <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
                                         </svg>
-                                        <p className="mt-2 text-sm text-blue-600 font-medium">Click to upload</p>
+                                        <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-blue-600 font-medium">Click to upload</p>
                                         <p className="text-xs text-blue-400">PNG, JPG up to 10MB</p>
                                     </div>
                                 )}
@@ -115,28 +119,28 @@ const Grid : React.FC = () => {
                     </div>
 
                     {/* Image 2 Upload */}
-                    <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-blue-200 hover:border-blue-400 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
-                        <h3 className="text-lg font-semibold text-blue-700 mb-4 flex items-center gap-2">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-md sm:shadow-lg p-3 sm:p-4 md:p-6 border-2 border-blue-200 hover:border-blue-400 transition-all duration-300 hover:shadow-lg sm:hover:shadow-xl transform hover:-translate-y-0.5 sm:hover:-translate-y-1 flex flex-col">
+                        <h3 className="text-base sm:text-lg md:text-lg font-semibold text-blue-700 mb-2 sm:mb-3 md:mb-4 flex items-center gap-2">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
-                            Content image
+                            <span className="truncate">Content image</span>
                         </h3>
                         
-                        <label className="flex-1 cursor-pointer">
-                            <div className="border-2 border-dashed border-blue-300 rounded-xl p-4 hover:border-blue-500 transition-colors bg-blue-50 hover:bg-blue-100 flex items-center justify-center min-h-52">
+                        <label className="flex-1 cursor-pointer flex">
+                            <div className="border-2 border-dashed border-blue-300 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-4 hover:border-blue-500 transition-colors bg-blue-50 hover:bg-blue-100 flex items-center justify-center w-full min-h-40 sm:min-h-48 md:min-h-52">
                                 {preview2 ? (
                                     <img
                                         src={preview2}
                                         alt="Preview 2"
-                                        className="max-h-75 max-w-full object-contain rounded-lg animate-fadeIn"
+                                        className="max-h-48 sm:max-h-60 md:max-h-80 max-w-full object-contain rounded-lg animate-fadeIn"
                                     />
                                 ) : (
-                                    <div className="text-center">
-                                        <svg className="mx-auto h-12 w-12 text-blue-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                    <div className="text-center p-2">
+                                        <svg className="mx-auto h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-blue-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                                             <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
                                         </svg>
-                                        <p className="mt-2 text-sm text-blue-600 font-medium">Click to upload</p>
+                                        <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-blue-600 font-medium">Click to upload</p>
                                         <p className="text-xs text-blue-400">PNG, JPG up to 10MB</p>
                                     </div>
                                 )}
@@ -147,13 +151,13 @@ const Grid : React.FC = () => {
                 </div>
 
                 {/* Merge Button */}
-                <div className="text-center py-4">
+                <div className="text-center py-2 sm:py-3 md:py-4">
                     <Button 
                         onClick={handleUpload}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 md:px-8 py-2 sm:py-3 md:py-6 text-xs sm:text-base md:text-lg font-semibold rounded-lg sm:rounded-xl md:rounded-xl shadow-md sm:shadow-lg hover:shadow-lg sm:hover:shadow-xl transform hover:scale-100 sm:hover:scale-105 transition-all duration-300 w-full sm:w-auto"
                         disabled={!photo1 || !photo2}
                     >
-                        <svg className="w-6 h-6 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 mr-1 sm:mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                         </svg>
                         Merge Images
@@ -161,22 +165,22 @@ const Grid : React.FC = () => {
                 </div>
 
                 {/* Result Section */}
-                <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-blue-300 min-h-50 animate-fadeIn">
-                    <h3 className="text-lg font-semibold text-blue-700 mb-4 flex items-center gap-2">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-md sm:shadow-lg p-3 sm:p-4 md:p-6 border-2 border-blue-300 min-h-32 sm:min-h-40 md:min-h-50 animate-fadeIn flex flex-col">
+                    <h3 className="text-base sm:text-lg md:text-lg font-semibold text-blue-700 mb-2 sm:mb-3 md:mb-4 flex items-center gap-2">
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        Result
+                        <span className="truncate">Result</span>
                     </h3>
-                    <div className="border-2 border-dashed border-blue-200 rounded-xl p-6 min-h-44 flex items-center justify-center bg-blue-50">
+                    <div className="border-2 border-dashed border-blue-200 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 min-h-28 sm:min-h-32 md:min-h-44 flex items-center justify-center bg-blue-50 flex-1">
                         {message ? (
-                            <p className={`text-sm font-medium ${
+                            <p className={`text-xs sm:text-sm md:text-sm font-medium text-center wrap-break-word ${
                                 message.includes('success') ? 'text-green-600' : 
                                 message.includes('error') || message.includes('failed') ? 'text-red-600' : 
                                 'text-blue-600'
                             }`}>{message}</p>
                         ) : (
-                            <p className="text-blue-400 text-sm">Result will appear here after merging</p>
+                            <p className="text-blue-400 text-xs sm:text-sm text-center">Result will appear here after merging</p>
                         )}
                     </div>
                 </div>

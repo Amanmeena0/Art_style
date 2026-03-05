@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 from FeaturesExtraction import style_layers
-from preparastion import style_image
+from database.preparastion import style_image
 
 import tensorflow as tf
 

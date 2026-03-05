@@ -4,7 +4,7 @@ import matplotlib as mpl
 import os 
 import sys 
 
-from preparastion import content_image, imshow
+from database.preparastion import content_image, imshow
 
 
 def clip_0_1(image):

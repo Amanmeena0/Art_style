@@ -1,11 +1,11 @@
 import sys
-sys.path.append('../src')
+sys.path.append('../database')
 
 import tensorflow_hub as hub
 import tensorflow as tf
 import numpy as np
 import PIL.Image
-from utlis import content_image, style_image
+from loadimages import content_image, style_image
 
 def tensor_to_image(tensor):
     tensor = tensor*255
@@ -19,4 +19,4 @@ def tensor_to_image(tensor):
 hub_model = hub.load('https://tfhub.dev/google/magenta/arbitrary-image-stylization-v1-256/2')
 stylized_image = hub_model(tf.constant(content_image), tf.constant(style_image))[0]
 result_image = tensor_to_image(stylized_image)
-result_image.show()
+# result_image.show()
