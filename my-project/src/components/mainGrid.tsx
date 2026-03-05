@@ -56,25 +56,41 @@ const Grid : React.FC = () => {
         formData.append("photo1", photo1);
         formData.append("photo2", photo2);
 
+        // Debug: Log file information
+        console.log("📸 UPLOAD DEBUG INFO:");
+        console.log("Photo 1 -", { name: photo1.name, size: photo1.size, type: photo1.type });
+        console.log("Photo 2 -", { name: photo2.name, size: photo2.size, type: photo2.type });
+        console.log("FormData entries:", Array.from(formData.entries()).map(([key, value]) => ({
+            key,
+            value: value instanceof File ? `${value.name} (${value.size} bytes)` : value
+        })));
+
         try{
-            console.log("Attempting to connect to http://localhost:8000/upload");
-            const response = await fetch("http://localhost:8000/upload", {
+            setMessage("Uploading... please wait");
+            console.log("🚀 Attempting to connect to http://localhost:8000/upload");
+            
+            const response = await fetch("http://127.0.0.1:8000/upload", {
                 method: "POST",
                 body: formData,
             });
 
-            console.log("Response status:", response.status);
-            console.log("Response headers:", response.headers);
+            console.log("✅ Response received:");
+            console.log("Status:", response.status);
+            console.log("Status Text:", response.statusText);
+            
+            const responseText = await response.text();
+            console.log("Response Body:", responseText);
             
             if(response.ok){
-                setMessage("Photos uploaded successfully");
+                setMessage(`✅ Photos uploaded successfully! (${response.status})`);
             } else {
-                setMessage(`Upload failed - Status: ${response.status}`);
+                setMessage(`❌ Upload failed - Status: ${response.status} ${response.statusText}`);
             }
 
         }catch (error) {
+            console.error("❌ Upload error:", error);
             setMessage(`Server error: ${error instanceof Error ? error.message : "Unknown error"}`);
-            console.error("Upload error", error);
+            console.error("Details:", error);
         }
         
     };
