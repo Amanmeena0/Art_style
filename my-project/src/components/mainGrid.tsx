@@ -11,6 +11,8 @@ const Grid : React.FC = () => {
     const [photo2, setPhoto2] = useState<File | null>(null);
     const [preview2, setPreview2] = useState<string | null>(null);
     const [message, setMessage] = useState<string>("");
+    const [mergedImage, setMergedImage] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const handlePhoto1Change = (e: ChangeEvent<HTMLInputElement>) => {
         
@@ -46,51 +48,102 @@ const Grid : React.FC = () => {
 
     };
 
-    const handleUpload = async () => {
+    const handleMerge = async () => {
         if(!photo1 || !photo2){
             setMessage("Please select both photos first");
             return;
         }
 
         const formData = new FormData();
-        formData.append("photo1", photo1);
-        formData.append("photo2", photo2);
+        formData.append("style", photo1);
+        formData.append("content", photo2);
 
         // Debug: Log file information
-        console.log("📸 UPLOAD DEBUG INFO:");
-        console.log("Photo 1 -", { name: photo1.name, size: photo1.size, type: photo1.type });
-        console.log("Photo 2 -", { name: photo2.name, size: photo2.size, type: photo2.type });
+        console.log("📸 MERGE DEBUG INFO:");
+        console.log("Style Image -", { name: photo1.name, size: photo1.size, type: photo1.type });
+        console.log("Content Image -", { name: photo2.name, size: photo2.size, type: photo2.type });
         console.log("FormData entries:", Array.from(formData.entries()).map(([key, value]) => ({
             key,
             value: value instanceof File ? `${value.name} (${value.size} bytes)` : value
         })));
 
         try{
-            setMessage("Uploading... please wait");
-            console.log("🚀 Attempting to connect to http://localhost:8000/upload");
+            setIsLoading(true);
+            setMessage("🔄 Uploading images... please wait");
+            setMergedImage(null);
+            console.log("🚀 Attempting to connect to http://127.0.0.1:8000/upload");
             
-            const response = await fetch("http://127.0.0.1:8000/upload", {
+            const uploadResponse = await fetch("http://127.0.0.1:8000/upload", {
                 method: "POST",
                 body: formData,
             });
 
-            console.log("✅ Response received:");
-            console.log("Status:", response.status);
-            console.log("Status Text:", response.statusText);
+            console.log("✅ Upload response received:");
+            console.log("Status:", uploadResponse.status);
+            console.log("Status Text:", uploadResponse.statusText);
             
-            const responseText = await response.text();
-            console.log("Response Body:", responseText);
-            
-            if(response.ok){
-                setMessage(`✅ Photos uploaded successfully! (${response.status})`);
+            if(uploadResponse.ok){
+                const uploadData = await uploadResponse.json();
+                console.log("Upload Data:", uploadData);
+                
+                const sessionId = uploadData.session_id;
+                
+                if(!sessionId){
+                    setMessage("❌ No session_id received from upload");
+                    return;
+                }
+
+                // Now fetch the result using session_id with polling
+                setMessage("🔄 Merging images... please wait");
+                console.log(`🎨 Fetching result for session: ${sessionId}`);
+                
+                // Poll for result (try multiple times with delays)
+                let resultData = null;
+                const maxAttempts = 30; // Try for up to 60 seconds (30 attempts * 2 seconds)
+                const delayMs = 2000; // Wait 2 seconds between attempts
+                
+                for(let attempt = 1; attempt <= maxAttempts; attempt++){
+                    console.log(`Attempt ${attempt}/${maxAttempts} - Fetching result...`);
+                    setMessage(`🔄 Merging images... (${attempt}/${maxAttempts})`);
+                    
+                    const resultResponse = await fetch(`http://127.0.0.1:8000/result/${sessionId}`);
+                    
+                    if(resultResponse.ok){
+                        resultData = await resultResponse.json();
+                        console.log("✅ Result received:", resultData);
+                        break; // Success! Exit the loop
+                    } else if(resultResponse.status === 404){
+                        console.log(`Result not ready yet, waiting ${delayMs}ms...`);
+                        // Wait before next attempt
+                        await new Promise(resolve => setTimeout(resolve, delayMs));
+                    } else {
+                        // Other error occurred
+                        const errorText = await resultResponse.text();
+                        console.error("Result fetch error:", errorText);
+                        setMessage(`❌ Failed to fetch result - Status: ${resultResponse.status}`);
+                        return;
+                    }
+                }
+                
+                if(resultData){
+                    // The image_data contains the base64 data URL
+                    setMergedImage(resultData.image_data);
+                    setMessage("✅ Images merged successfully!");
+                } else {
+                    setMessage("❌ Timeout: Result not ready after multiple attempts");
+                }
             } else {
-                setMessage(`❌ Upload failed - Status: ${response.status} ${response.statusText}`);
+                const errorText = await uploadResponse.text();
+                console.error("Upload error response:", errorText);
+                setMessage(`❌ Upload failed - Status: ${uploadResponse.status} ${uploadResponse.statusText}`);
             }
 
         }catch (error) {
-            console.error("❌ Upload error:", error);
+            console.error("❌ Merge error:", error);
             setMessage(`Server error: ${error instanceof Error ? error.message : "Unknown error"}`);
             console.error("Details:", error);
+        } finally {
+            setIsLoading(false);
         }
         
     };
@@ -169,14 +222,25 @@ const Grid : React.FC = () => {
                 {/* Merge Button */}
                 <div className="text-center py-2 sm:py-3 md:py-4">
                     <Button 
-                        onClick={handleUpload}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 md:px-8 py-2 sm:py-3 md:py-6 text-xs sm:text-base md:text-lg font-semibold rounded-lg sm:rounded-xl md:rounded-xl shadow-md sm:shadow-lg hover:shadow-lg sm:hover:shadow-xl transform hover:scale-100 sm:hover:scale-105 transition-all duration-300 w-full sm:w-auto"
-                        disabled={!photo1 || !photo2}
+                        onClick={handleMerge}
+                        className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 sm:px-6 md:px-8 py-2 sm:py-3 md:py-6 text-xs sm:text-base md:text-lg font-semibold rounded-lg sm:rounded-xl md:rounded-xl shadow-md sm:shadow-lg hover:shadow-lg sm:hover:shadow-xl transform hover:scale-100 sm:hover:scale-105 transition-all duration-300 w-full sm:w-auto"
+                        disabled={!photo1 || !photo2 || isLoading}
                     >
-                        <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 mr-1 sm:mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                        </svg>
-                        Merge Images
+                        {isLoading ? (
+                            <>
+                                <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 mr-1 sm:mr-2 inline animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Merging...
+                            </>
+                        ) : (
+                            <>
+                                <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 mr-1 sm:mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                </svg>
+                                Merge Images
+                            </>
+                        )}
                     </Button>
                 </div>
 
@@ -186,13 +250,20 @@ const Grid : React.FC = () => {
                         <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <span className="truncate">Result</span>
+                        <span className="truncate">Merged Result</span>
                     </h3>
                     <div className="border-2 border-dashed border-blue-200 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 min-h-28 sm:min-h-32 md:min-h-44 flex items-center justify-center bg-blue-50 flex-1">
-                        {message ? (
+                        {mergedImage ? (
+                            <img
+                                src={mergedImage}
+                                alt="Merged Result"
+                                className="max-h-48 sm:max-h-60 md:max-h-80 max-w-full object-contain rounded-lg animate-fadeIn"
+                            />
+                        ) : message ? (
                             <p className={`text-xs sm:text-sm md:text-sm font-medium text-center wrap-break-word ${
                                 message.includes('success') ? 'text-green-600' : 
                                 message.includes('error') || message.includes('failed') ? 'text-red-600' : 
+                                message.includes('Merging') ? 'text-blue-600' :
                                 'text-blue-600'
                             }`}>{message}</p>
                         ) : (

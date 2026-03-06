@@ -1,19 +1,11 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
-from gridfs import GridFS
 import os
 from dotenv import load_dotenv
-import logging
-from bson import ObjectId
 import base64
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+import uuid
+from datetime import datetime
 
 load_dotenv()
 
@@ -21,164 +13,160 @@ mongo_url = os.getenv("MONGO_URL")
 db_name = os.getenv("DB_NAME")
 
 if not mongo_url or not db_name:
-    logger.error("Missing MONGO_URL or DB_NAME in environment variables")
-    raise ValueError("Missing required environment variables")
+    raise ValueError("Missing MONGO_URL or DB_NAME in environment variables")
 
 app = FastAPI()
 
-# Configure CORS more specifically
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],  # Your React app's address
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-try:
-    client = MongoClient(mongo_url)
-    db = client[db_name]
-    # Test connection
-    client.admin.command('ping')
-    logger.info("✅ Connected to MongoDB successfully")
-    
-    # Use GridFS for large files
-    fs = GridFS(db)
-    collection = db["images"]
-except Exception as e:
-    logger.error(f"❌ Failed to connect to MongoDB: {e}")
-    raise
+client = MongoClient(mongo_url)
+db = client[db_name]
+client.admin.command('ping')
+collection = db["images"]
+
 
 @app.get("/")
 async def root():
     return {"message": "FastAPI server is running"}
 
+
 @app.post("/upload")
-async def upload_image(photo1: UploadFile = File(...), photo2: UploadFile = File(...)):
-    logger.info(f"📥 Received upload request from frontend")
-    logger.info(f"   - Photo1: {photo1.filename}, Size: {photo1.size if hasattr(photo1, 'size') else 'unknown'}")
-    logger.info(f"   - Photo2: {photo2.filename}, Size: {photo2.size if hasattr(photo2, 'size') else 'unknown'}")
-    
+async def upload_image(style: UploadFile = File(...), content: UploadFile = File(...)):
     try:
-        # Process photo1
-        contents1 = await photo1.read()
-        logger.info(f"   - Photo1 size: {len(contents1)} bytes")
+        session_id = str(uuid.uuid4())
+        upload_timestamp = datetime.utcnow()
         
-        # Store in MongoDB
+        contents1 = await style.read()
         image_data1 = {
-            "filename": photo1.filename,
-            "content_type": photo1.content_type,
+            "filename": style.filename,
+            "content_type": style.content_type,
             "data": contents1,
-            "type": "photo1",
-            "size": len(contents1)
+            "type": "style",
+            "size": len(contents1),
+            "session_id": session_id,
+            "uploaded_at": upload_timestamp
         }
         result1 = collection.insert_one(image_data1)
-        logger.info(f"   ✓ Photo1 stored with ID: {result1.inserted_id}")
         
-        # Process photo2
-        contents2 = await photo2.read()
-        logger.info(f"   - Photo2 size: {len(contents2)} bytes")
-        
+        contents2 = await content.read()
         image_data2 = {
-            "filename": photo2.filename,
-            "content_type": photo2.content_type,
+            "filename": content.filename,
+            "content_type": content.content_type,
             "data": contents2,
-            "type": "photo2",
-            "size": len(contents2)
+            "type": "content",
+            "size": len(contents2),
+            "session_id": session_id,
+            "uploaded_at": upload_timestamp
         }
         result2 = collection.insert_one(image_data2)
-        logger.info(f"   ✓ Photo2 stored with ID: {result2.inserted_id}")
-        
-        logger.info(f"✅ Both images uploaded successfully")
         
         return {
-            "message": "Both images uploaded successfully", 
-            "photo1": {
-                "filename": photo1.filename,
+            "message": "Both images uploaded successfully",
+            "session_id": session_id,
+            "style": {
+                "filename": style.filename,
                 "size": len(contents1),
                 "id": str(result1.inserted_id)
             },
-            "photo2": {
-                "filename": photo2.filename,
+            "content": {
+                "filename": content.filename,
                 "size": len(contents2),
                 "id": str(result2.inserted_id)
             }
         }
     
     except Exception as e:
-        logger.error(f"❌ Error uploading images: {e}")
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
-@app.get("/images")
-async def get_images(limit: int = 10, image_type: str = None):
-    """
-    Retrieve multiple images from the database
-    - limit: maximum number of images to return (default: 10)
-    - image_type: filter by image type (photo1, photo2, or None for all)
-    """
+
+@app.post("/process/{session_id}")
+async def process_style_transfer(session_id: str):
+    """Process style transfer for given session"""
     try:
-        logger.info(f"📤 Fetching images from database (limit: {limit}, type: {image_type})")
+        from .loadimages import get_style_image, get_content_image
+        from .preparastion import prepare_images
+        from ..models.pretrained_model import run_style_transfer
         
-        # Build query
-        query = {}
-        if image_type:
-            query["type"] = image_type
+        # Get images from database
+        style_doc = get_style_image(session_id)
+        content_doc = get_content_image(session_id)
         
-        # Fetch images from database
-        images = collection.find(query).sort("_id", -1).limit(limit)
+        if not style_doc or not content_doc:
+            raise HTTPException(status_code=404, detail="Images not found for session")
         
-        result = []
-        for image in images:
-            result.append({
-                "id": str(image["_id"]),
-                "filename": image["filename"],
-                "content_type": image["content_type"],
-                "type": image.get("type", "unknown"),
-                "size": image.get("size", 0),
-                "data": base64.b64encode(image["data"]).decode('utf-8')
-            })
+        # Prepare images for model
+        style_tensor, content_tensor = prepare_images(
+            style_doc["data"],
+            content_doc["data"]
+        )
         
-        logger.info(f"✅ Retrieved {len(result)} images")
+        # Run style transfer
+        result_bytes = run_style_transfer(content_tensor, style_tensor)
+        
+        # Store result in database
+        result_data = {
+            "filename": f"result_{session_id}.png",
+            "content_type": "image/png",
+            "data": result_bytes,
+            "type": "result",
+            "size": len(result_bytes),
+            "session_id": session_id,
+            "created_at": datetime.utcnow()
+        }
+        result = collection.insert_one(result_data)
+        
         return {
-            "count": len(result),
-            "images": result
+            "message": "Style transfer completed",
+            "session_id": session_id,
+            "result_id": str(result.inserted_id)
         }
     
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"❌ Error retrieving images: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve images: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
-@app.get("/images/{image_id}")
-async def get_image(image_id: str):
-    """
-    Retrieve a single image by its ID
-    """
+
+@app.get("/result/{session_id}")
+async def get_result(session_id: str):
+    """Fetch the processed result image"""
     try:
-        logger.info(f"📤 Fetching image with ID: {image_id}")
-        image = collection.find_one({"_id": ObjectId(image_id)})
+        result = collection.find_one({"session_id": session_id, "type": "result"})
         
-        if image:
-            logger.info(f"✅ Image found: {image['filename']}")
-            # Return image data as base64
-            return {
-                "id": str(image["_id"]),
-                "filename": image["filename"],
-                "content_type": image["content_type"],
-                "type": image.get("type", "unknown"),
-                "size": image.get("size", 0),
-                "data": base64.b64encode(image["data"]).decode('utf-8')
-            }
+        if not result:
+            raise HTTPException(status_code=404, detail="Result not found")
         
-        logger.warning(f"⚠️ Image not found with ID: {image_id}")
-        raise HTTPException(status_code=404, detail="Image not found")
-    
+        image_base64 = base64.b64encode(result["data"]).decode("utf-8")
+        
+        return {
+            "session_id": session_id,
+            "filename": result["filename"],
+            "content_type": result["content_type"],
+            "image_data": f"data:{result['content_type']};base64,{image_base64}",
+            "created_at": result["created_at"].isoformat()
+        }
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"❌ Error retrieving image: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/status/{session_id}")
+async def check_status(session_id: str):
+    """Check if result is ready"""
+    result = collection.find_one({"session_id": session_id, "type": "result"})
+    return {
+        "session_id": session_id,
+        "ready": result is not None
+    }
+
 
 if __name__ == "__main__":
     import uvicorn
-    logger.info("🚀 Starting FastAPI server on http://127.0.0.1:8000")
-    logger.info("📡 Listening for frontend requests...")
-    logger.info("🌐 CORS enabled for http://localhost:3000")
-    uvicorn.run(app, host="127.0.0.1", port=8000)  # removed reload=True
+    uvicorn.run(app, host="127.0.0.1", port=8000)
