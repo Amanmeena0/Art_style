@@ -1,3 +1,9 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from database.preparastion import prepare_images
+from models.pretrained_model import run_style_transfer
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
@@ -36,95 +42,73 @@ async def root():
     return {"message": "FastAPI server is running"}
 
 
-@app.post("/upload")
-async def upload_image(style: UploadFile = File(...), content: UploadFile = File(...)):
+@app.post("/process")
+async def process_style_transfer(
+    style: UploadFile = File(...), 
+    content: UploadFile = File(...),
+    store_result: bool = False
+):
+    """Upload images and process style transfer in one call"""
     try:
+        
         session_id = str(uuid.uuid4())
-        upload_timestamp = datetime.utcnow()
         
-        contents1 = await style.read()
-        image_data1 = {
-            "filename": style.filename,
-            "content_type": style.content_type,
-            "data": contents1,
-            "type": "style",
-            "size": len(contents1),
-            "session_id": session_id,
-            "uploaded_at": upload_timestamp
-        }
-        result1 = collection.insert_one(image_data1)
-        
-        contents2 = await content.read()
-        image_data2 = {
-            "filename": content.filename,
-            "content_type": content.content_type,
-            "data": contents2,
-            "type": "content",
-            "size": len(contents2),
-            "session_id": session_id,
-            "uploaded_at": upload_timestamp
-        }
-        result2 = collection.insert_one(image_data2)
-        
-        return {
-            "message": "Both images uploaded successfully",
-            "session_id": session_id,
-            "style": {
-                "filename": style.filename,
-                "size": len(contents1),
-                "id": str(result1.inserted_id)
-            },
-            "content": {
-                "filename": content.filename,
-                "size": len(contents2),
-                "id": str(result2.inserted_id)
-            }
-        }
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
-
-
-@app.post("/process/{session_id}")
-async def process_style_transfer(session_id: str):
-    """Process style transfer for given session"""
-    try:
-        from .loadimages import get_style_image, get_content_image
-        from .preparastion import prepare_images
-        from ..models.pretrained_model import run_style_transfer
-        
-        # Get images from database
-        style_doc = get_style_image(session_id)
-        content_doc = get_content_image(session_id)
-        
-        if not style_doc or not content_doc:
-            raise HTTPException(status_code=404, detail="Images not found for session")
+        # Read image bytes directly - no database storage needed for processing
+        style_bytes = await style.read()
+        content_bytes = await content.read()
         
         # Prepare images for model
-        style_tensor, content_tensor = prepare_images(
-            style_doc["data"],
-            content_doc["data"]
-        )
+        style_tensor, content_tensor = prepare_images(style_bytes, content_bytes)
         
         # Run style transfer
         result_bytes = run_style_transfer(content_tensor, style_tensor)
         
-        # Store result in database
-        result_data = {
-            "filename": f"result_{session_id}.png",
-            "content_type": "image/png",
-            "data": result_bytes,
-            "type": "result",
-            "size": len(result_bytes),
-            "session_id": session_id,
-            "created_at": datetime.utcnow()
-        }
-        result = collection.insert_one(result_data)
+       
+        result_id = None
+        if store_result:
+            upload_timestamp = datetime.utcnow()
+            
+            # Bulk insert all images at once
+            documents = [
+                {
+                    "filename": style.filename,
+                    "content_type": style.content_type,
+                    "data": style_bytes,
+                    "type": "style",
+                    "size": len(style_bytes),
+                    "session_id": session_id,
+                    "uploaded_at": upload_timestamp
+                },
+                {
+                    "filename": content.filename,
+                    "content_type": content.content_type,
+                    "data": content_bytes,
+                    "type": "content",
+                    "size": len(content_bytes),
+                    "session_id": session_id,
+                    "uploaded_at": upload_timestamp
+                },
+                {
+                    "filename": f"result_{session_id}.png",
+                    "content_type": "image/png",
+                    "data": result_bytes,
+                    "type": "result",
+                    "size": len(result_bytes),
+                    "session_id": session_id,
+                    "created_at": upload_timestamp
+                }
+            ]
+            results = collection.insert_many(documents)
+            result_id = str(results.inserted_ids[2])
+        
+        # Return result directly
+        image_base64 = base64.b64encode(result_bytes).decode("utf-8")
         
         return {
             "message": "Style transfer completed",
             "session_id": session_id,
-            "result_id": str(result.inserted_id)
+            "result_id": result_id,
+            "image_data": f"data:image/png;base64,{image_base64}"
         }
     
     except HTTPException:
@@ -135,7 +119,7 @@ async def process_style_transfer(session_id: str):
 
 @app.get("/result/{session_id}")
 async def get_result(session_id: str):
-    """Fetch the processed result image"""
+    """Fetch a previously stored result image"""
     try:
         result = collection.find_one({"session_id": session_id, "type": "result"})
         
@@ -157,14 +141,24 @@ async def get_result(session_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/status/{session_id}")
-async def check_status(session_id: str):
-    """Check if result is ready"""
-    result = collection.find_one({"session_id": session_id, "type": "result"})
-    return {
-        "session_id": session_id,
-        "ready": result is not None
-    }
+@app.get("/history")
+async def get_history(limit: int = 10):
+    """Get recent processed results"""
+    try:
+        results = collection.find(
+            {"type": "result"}
+        ).sort("created_at", -1).limit(limit)
+        
+        return [
+            {
+                "session_id": r["session_id"],
+                "filename": r["filename"],
+                "created_at": r["created_at"].isoformat()
+            }
+            for r in results
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":

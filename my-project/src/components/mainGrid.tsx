@@ -2,10 +2,7 @@ import { Button } from "@/components/ui/button";
 import React, { useState } from "react";
 import type { ChangeEvent } from "react";
 
-
-
-const Grid : React.FC = () => {
-
+const Grid: React.FC = () => {
     const [photo1, setPhoto1] = useState<File | null>(null);
     const [preview1, setPreview1] = useState<string | null>(null);
     const [photo2, setPhoto2] = useState<File | null>(null);
@@ -15,41 +12,35 @@ const Grid : React.FC = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const handlePhoto1Change = (e: ChangeEvent<HTMLInputElement>) => {
-        
         const file = e.target.files?.[0];
-
         if (!file) return;
 
-        if(!file.type.startsWith("image/")){
+        if (!file.type.startsWith("image/")) {
             setMessage("Please select a valid image file");
             return;
         }
-        
+
         setPhoto1(file);
         setPreview1(URL.createObjectURL(file));
         setMessage("");
-
     };
 
     const handlePhoto2Change = (e: ChangeEvent<HTMLInputElement>) => {
-        
         const file = e.target.files?.[0];
-
         if (!file) return;
 
-        if(!file.type.startsWith("image/")){
+        if (!file.type.startsWith("image/")) {
             setMessage("Please select a valid image file");
             return;
         }
-        
+
         setPhoto2(file);
         setPreview2(URL.createObjectURL(file));
         setMessage("");
-
     };
 
     const handleMerge = async () => {
-        if(!photo1 || !photo2){
+        if (!photo1 || !photo2) {
             setMessage("Please select both photos first");
             return;
         }
@@ -58,105 +49,36 @@ const Grid : React.FC = () => {
         formData.append("style", photo1);
         formData.append("content", photo2);
 
-        // Debug: Log file information
-        console.log("📸 MERGE DEBUG INFO:");
-        console.log("Style Image -", { name: photo1.name, size: photo1.size, type: photo1.type });
-        console.log("Content Image -", { name: photo2.name, size: photo2.size, type: photo2.type });
-        console.log("FormData entries:", Array.from(formData.entries()).map(([key, value]) => ({
-            key,
-            value: value instanceof File ? `${value.name} (${value.size} bytes)` : value
-        })));
-
-        try{
+        try {
             setIsLoading(true);
-            setMessage("🔄 Uploading images... please wait");
+            setMessage("🔄 Processing style transfer...");
             setMergedImage(null);
-            console.log("🚀 Attempting to connect to http://127.0.0.1:8000/upload");
-            
-            const uploadResponse = await fetch("http://127.0.0.1:8000/upload", {
+
+            const response = await fetch("http://127.0.0.1:8000/process", {
                 method: "POST",
                 body: formData,
             });
 
-            console.log("✅ Upload response received:");
-            console.log("Status:", uploadResponse.status);
-            console.log("Status Text:", uploadResponse.statusText);
-            
-            if(uploadResponse.ok){
-                const uploadData = await uploadResponse.json();
-                console.log("Upload Data:", uploadData);
-                
-                const sessionId = uploadData.session_id;
-                
-                if(!sessionId){
-                    setMessage("❌ No session_id received from upload");
-                    return;
-                }
-
-                // Now fetch the result using session_id with polling
-                setMessage("🔄 Merging images... please wait");
-                console.log(`🎨 Fetching result for session: ${sessionId}`);
-                
-                // Poll for result (try multiple times with delays)
-                let resultData = null;
-                const maxAttempts = 30; // Try for up to 60 seconds (30 attempts * 2 seconds)
-                const delayMs = 2000; // Wait 2 seconds between attempts
-                
-                for(let attempt = 1; attempt <= maxAttempts; attempt++){
-                    console.log(`Attempt ${attempt}/${maxAttempts} - Fetching result...`);
-                    setMessage(`🔄 Merging images... (${attempt}/${maxAttempts})`);
-                    
-                    const resultResponse = await fetch(`http://127.0.0.1:8000/result/${sessionId}`);
-                    
-                    if(resultResponse.ok){
-                        resultData = await resultResponse.json();
-                        console.log("✅ Result received:", resultData);
-                        break; // Success! Exit the loop
-                    } else if(resultResponse.status === 404){
-                        console.log(`Result not ready yet, waiting ${delayMs}ms...`);
-                        // Wait before next attempt
-                        await new Promise(resolve => setTimeout(resolve, delayMs));
-                    } else {
-                        // Other error occurred
-                        const errorText = await resultResponse.text();
-                        console.error("Result fetch error:", errorText);
-                        setMessage(`❌ Failed to fetch result - Status: ${resultResponse.status}`);
-                        return;
-                    }
-                }
-                
-                if(resultData){
-                    // The image_data contains the base64 data URL
-                    setMergedImage(resultData.image_data);
-                    setMessage("✅ Images merged successfully!");
-                } else {
-                    setMessage("❌ Timeout: Result not ready after multiple attempts");
-                }
+            if (response.ok) {
+                const data = await response.json();
+                setMergedImage(data.image_data);
+                setMessage("✅ Style transfer completed!");
             } else {
-                const errorText = await uploadResponse.text();
-                console.error("Upload error response:", errorText);
-                setMessage(`❌ Upload failed - Status: ${uploadResponse.status} ${uploadResponse.statusText}`);
+                const errorData = await response.json().catch(() => null);
+                const detail = errorData?.detail || response.statusText;
+                setMessage(`❌ Processing failed - ${detail}`);
             }
-
-        }catch (error) {
-            console.error("❌ Merge error:", error);
+        } catch (error) {
             setMessage(`Server error: ${error instanceof Error ? error.message : "Unknown error"}`);
-            console.error("Details:", error);
         } finally {
             setIsLoading(false);
         }
-        
     };
 
-
-    return(
+    return (
         <div className="bg-linear-to-br from-blue-50 to-blue-100 flex-1 overflow-auto">
-            {/* Upload Section */}
             <div className="w-full flex flex-col gap-3 sm:gap-4 md:gap-6 p-3 sm:p-4 md:p-6">
-                
-                {/* Image Upload Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
-                    {/* Image 1 Upload */}
                     <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-md sm:shadow-lg p-3 sm:p-4 md:p-6 border-2 border-blue-200 hover:border-blue-400 transition-all duration-300 hover:shadow-lg sm:hover:shadow-xl transform hover:-translate-y-0.5 sm:hover:-translate-y-1 flex flex-col">
                         <h3 className="text-base sm:text-lg md:text-lg font-semibold text-blue-700 mb-2 sm:mb-3 md:mb-4 flex items-center gap-2">
                             <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -164,7 +86,6 @@ const Grid : React.FC = () => {
                             </svg>
                             <span className="truncate">Style image</span>
                         </h3>
-                        
                         <label className="flex-1 cursor-pointer flex">
                             <div className="border-2 border-dashed border-blue-300 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-4 hover:border-blue-500 transition-colors bg-blue-50 hover:bg-blue-100 flex items-center justify-center w-full min-h-40 sm:min-h-48 md:min-h-52">
                                 {preview1 ? (
@@ -187,7 +108,6 @@ const Grid : React.FC = () => {
                         </label>
                     </div>
 
-                    {/* Image 2 Upload */}
                     <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-md sm:shadow-lg p-3 sm:p-4 md:p-6 border-2 border-blue-200 hover:border-blue-400 transition-all duration-300 hover:shadow-lg sm:hover:shadow-xl transform hover:-translate-y-0.5 sm:hover:-translate-y-1 flex flex-col">
                         <h3 className="text-base sm:text-lg md:text-lg font-semibold text-blue-700 mb-2 sm:mb-3 md:mb-4 flex items-center gap-2">
                             <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -195,7 +115,6 @@ const Grid : React.FC = () => {
                             </svg>
                             <span className="truncate">Content image</span>
                         </h3>
-                        
                         <label className="flex-1 cursor-pointer flex">
                             <div className="border-2 border-dashed border-blue-300 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-4 hover:border-blue-500 transition-colors bg-blue-50 hover:bg-blue-100 flex items-center justify-center w-full min-h-40 sm:min-h-48 md:min-h-52">
                                 {preview2 ? (
@@ -219,7 +138,6 @@ const Grid : React.FC = () => {
                     </div>
                 </div>
 
-                {/* Merge Button */}
                 <div className="text-center py-2 sm:py-3 md:py-4">
                     <Button 
                         onClick={handleMerge}
@@ -244,7 +162,6 @@ const Grid : React.FC = () => {
                     </Button>
                 </div>
 
-                {/* Result Section */}
                 <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-md sm:shadow-lg p-3 sm:p-4 md:p-6 border-2 border-blue-300 min-h-32 sm:min-h-40 md:min-h-50 animate-fadeIn flex flex-col">
                     <h3 className="text-base sm:text-lg md:text-lg font-semibold text-blue-700 mb-2 sm:mb-3 md:mb-4 flex items-center gap-2">
                         <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
