@@ -4,7 +4,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from database.preparastion import prepare_images
 from models.pretrained_model import run_style_transfer
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 import os
@@ -12,14 +12,18 @@ from dotenv import load_dotenv
 import base64
 import uuid
 from datetime import datetime
+from bson import Binary
 
 load_dotenv()
 
 mongo_url = os.getenv("MONGO_URL")
 db_name = os.getenv("DB_NAME")
 
-if not mongo_url or not db_name:
-    raise ValueError("Missing MONGO_URL or DB_NAME in environment variables")
+# ✅ FIX
+if not mongo_url:
+    raise ValueError("Missing MONGO_URL in .env file")
+if not db_name:
+    raise ValueError("Missing DB_NAME in .env file")
 
 app = FastAPI()
 
@@ -33,7 +37,12 @@ app.add_middleware(
 
 client = MongoClient(mongo_url)
 db = client[db_name]
-client.admin.command('ping')
+try:
+    client.admin.command('ping')
+    print("✅ MongoDB connected successfully")
+except Exception as e:
+    raise RuntimeError(f"❌ Could not connect to MongoDB: {e}")
+
 collection = db["images"]
 
 
@@ -42,64 +51,95 @@ async def root():
     return {"message": "FastAPI server is running"}
 
 
-@app.post("/process")
-async def process_style_transfer(
-    style: UploadFile = File(...), 
-    content: UploadFile = File(...),
-    store_result: bool = False
-):
-    """Upload images and process style transfer in one call"""
+# Image processing function
+async def process_images(style_bytes: bytes, content_bytes: bytes) -> bytes:
+    """Process style transfer and return result bytes"""
     try:
-        
-        session_id = str(uuid.uuid4())
-        
-        # Read image bytes directly - no database storage needed for processing
-        style_bytes = await style.read()
-        content_bytes = await content.read()
-        
         # Prepare images for model
         style_tensor, content_tensor = prepare_images(style_bytes, content_bytes)
         
         # Run style transfer
         result_bytes = run_style_transfer(content_tensor, style_tensor)
         
-       
+        return result_bytes
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
+
+# Image storage function
+def store_images_in_db(
+    style: UploadFile,
+    content: UploadFile,
+    style_bytes: bytes,
+    content_bytes: bytes,
+    result_bytes: bytes,
+    session_id: str
+) -> str:
+    """Store all three images in database and return result_id"""
+    try:
+        upload_timestamp = datetime.utcnow()
+        
+        # Bulk insert all images at once
+        documents = [
+            {
+                "filename": style.filename,
+                "content_type": style.content_type,
+                "data": Binary(style_bytes),       
+                "type": "style",
+                "size": len(style_bytes),
+                "session_id": session_id,
+                "uploaded_at": upload_timestamp
+            },
+            {
+                "filename": content.filename,
+                "content_type": content.content_type,
+                "data": Binary(content_bytes),    
+                "type": "content",
+                "size": len(content_bytes),
+                "session_id": session_id,
+                "uploaded_at": upload_timestamp
+            },
+            {
+                "filename": f"result_{session_id}.png",
+                "content_type": "image/png",
+                "data": Binary(result_bytes),      
+                "type": "result",
+                "size": len(result_bytes),
+                "session_id": session_id,
+                "created_at": upload_timestamp
+            }
+        ]
+
+        results = collection.insert_many(documents)
+        return str(results.inserted_ids[2])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Storage failed: {str(e)}")
+
+# Main endpoint
+@app.post("/process")
+async def process_style_transfer(
+    style: UploadFile = File(...), 
+    content: UploadFile = File(...),
+    store_result: bool = Form(False)
+):
+    """Upload images and process style transfer in one call"""
+    try:
+        session_id = str(uuid.uuid4())
+        
+        # Read image bytes directly - no database storage needed for processing
+        style_bytes = await style.read()
+        content_bytes = await content.read()
+        
+        # Process images
+        result_bytes = await process_images(style_bytes, content_bytes)
+        
+        # Store in database if requested
         result_id = None
         if store_result:
-            upload_timestamp = datetime.utcnow()
-            
-            # Bulk insert all images at once
-            documents = [
-                {
-                    "filename": style.filename,
-                    "content_type": style.content_type,
-                    "data": style_bytes,
-                    "type": "style",
-                    "size": len(style_bytes),
-                    "session_id": session_id,
-                    "uploaded_at": upload_timestamp
-                },
-                {
-                    "filename": content.filename,
-                    "content_type": content.content_type,
-                    "data": content_bytes,
-                    "type": "content",
-                    "size": len(content_bytes),
-                    "session_id": session_id,
-                    "uploaded_at": upload_timestamp
-                },
-                {
-                    "filename": f"result_{session_id}.png",
-                    "content_type": "image/png",
-                    "data": result_bytes,
-                    "type": "result",
-                    "size": len(result_bytes),
-                    "session_id": session_id,
-                    "created_at": upload_timestamp
-                }
-            ]
-            results = collection.insert_many(documents)
-            result_id = str(results.inserted_ids[2])
+            result_id = store_images_in_db(
+                style, content, 
+                style_bytes, content_bytes, 
+                result_bytes, session_id
+            )
         
         # Return result directly
         image_base64 = base64.b64encode(result_bytes).decode("utf-8")
@@ -126,7 +166,7 @@ async def get_result(session_id: str):
         if not result:
             raise HTTPException(status_code=404, detail="Result not found")
         
-        image_base64 = base64.b64encode(result["data"]).decode("utf-8")
+        image_base64 = base64.b64encode(bytes(result["data"])).decode("utf-8")
         
         return {
             "session_id": session_id,

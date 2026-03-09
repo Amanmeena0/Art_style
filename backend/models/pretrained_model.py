@@ -9,7 +9,6 @@ import io
 # Load model once at module level
 hub_model = hub.load('https://tfhub.dev/google/magenta/arbitrary-image-stylization-v1-256/2')
 
-
 def tensor_to_image(tensor):
     """Convert tensor to PIL Image"""
     tensor = tensor * 255
