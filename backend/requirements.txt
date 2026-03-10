@@ -1,0 +1,11 @@
+pillow
+tensorflow
+tensorflow-hub
+fastapi
+matplotlib
+numpy
+opencv-python
+ipython
+python-dotenv
+pymongo
+uvicorn
