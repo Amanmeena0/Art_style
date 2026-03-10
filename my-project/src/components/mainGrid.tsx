@@ -45,31 +45,54 @@ const Grid: React.FC = () => {
             return;
         }
 
-        const formData = new FormData();
-        formData.append("style", photo1);
-        formData.append("content", photo2);
-
         try {
             setIsLoading(true);
-            setMessage("🔄 Processing style transfer...");
             setMergedImage(null);
 
-            const response = await fetch("http://127.0.0.1:8000/process", {
+            // Step 1: Upload both images
+            setMessage("🔄 Uploading images...");
+            const formData = new FormData();
+            formData.append("style_image", photo1);
+            formData.append("content_image", photo2);
+
+            const uploadResponse = await fetch("http://127.0.0.1:8000/upload", {
                 method: "POST",
                 body: formData,
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                setMergedImage(data.image_data);
+            if (!uploadResponse.ok) {
+                const errorData = await uploadResponse.json().catch(() => null);
+                throw new Error(errorData?.detail || "Failed to upload images");
+            }
+
+            const { session_id } = await uploadResponse.json();
+
+            // Step 2: Process style transfer
+            setMessage("🔄 Processing style transfer...");
+            const processForm = new FormData();
+            processForm.append("session_id", session_id);
+
+            const processResponse = await fetch("http://127.0.0.1:8000/process", {
+                method: "POST",
+                body: processForm,
+            });
+
+            if (!processResponse.ok) {
+                const errorData = await processResponse.json().catch(() => null);
+                throw new Error(errorData?.detail || "Style transfer failed");
+            }
+
+            const { result_base64 } = await processResponse.json();
+
+            // Step 3: Display result
+            if (result_base64) {
+                setMergedImage(`data:image/png;base64,${result_base64}`);
                 setMessage("✅ Style transfer completed!");
             } else {
-                const errorData = await response.json().catch(() => null);
-                const detail = errorData?.detail || response.statusText;
-                setMessage(`❌ Processing failed - ${detail}`);
+                setMessage("❌ No result image in response");
             }
         } catch (error) {
-            setMessage(`Server error: ${error instanceof Error ? error.message : "Unknown error"}`);
+            setMessage(`❌ Error: ${error instanceof Error ? error.message : "Unknown error"}`);
         } finally {
             setIsLoading(false);
         }
