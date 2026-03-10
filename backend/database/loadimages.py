@@ -15,7 +15,7 @@ def get_collection():
     """Get database collection with connection handling"""
     try:
         client = MongoClient(mongo_url, serverSelectionTimeoutMS=5000)
-        client.admin.command('ping')  # Test connection
+        client.admin.command('ping')  
         db = client[db_name]
         return db["images"]
     except ConnectionFailure as e:
@@ -71,7 +71,32 @@ def get_content_image(session_id: str):
     except PyMongoError as e:
         print(f"Error fetching content image: {e}")
         return None
+    
+    
+def get_result_image(session_id:str):
+    """
+        Result iamge fetching
+    """
 
+    try:
+        collection = get_collection()
+        image = collection.find_one({"session_id": session_id, "type": "result"})
+        if image:
+            return{
+                    "id": str(image["_id"]),
+                    "filename": image.get("filename"),
+                    "content_type": image.get("content_type"),
+                    "type": image.get("type"),
+                    "size": image.get("size", 0),
+                    "session_id": image.get("session_id"),
+                    "uploaded_at": image.get("uploaded_at"),
+                    "data": image.get("data")
+            }
+
+    except PyMongoError as e:
+        print(f"Error fetching result iamge: {e}")
+        return None
+    
 
 def get_images_by_session(session_id: str):
     """
