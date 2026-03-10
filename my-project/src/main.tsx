@@ -13,7 +13,7 @@ if (!ApiKey) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ClerkProvider publishableKey={ApiKey}>
+    <ClerkProvider publishableKey={ApiKey} afterSignOutUrl="/">
       <App />
     </ClerkProvider>
   </StrictMode>,

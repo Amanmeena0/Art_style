@@ -14,7 +14,7 @@ export function Navbar(){
             </div>
             
             <div className="flex items-center">
-                <UserButton afterSignOutUrl="/" />
+                <UserButton />
             </div>
         </div>
         
