@@ -6,7 +6,7 @@ export function Navbar(){
             
             <div className="flex items-center gap-2">
                 <img src="/image.png" alt="Styler Logo" className="h-10 w-10 object-contain" />
-                <span className="text-lg font-bold text-pink-300">Styler</span>
+                
             </div>
         
             <div className="flex-1 text-center">
