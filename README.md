@@ -1,4 +1,4 @@
-# Art Style Transfer
+# Botanical Merge | Blend Your Vision
 
 A full-stack neural style transfer application that applies artistic styles from reference images to content images using deep learning.
 
