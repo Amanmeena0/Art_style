@@ -1,20 +1,48 @@
-export function Navbar(){
-    return (
-        <div className="flex items-center justify-between bg-linear-to-r from-blue-700 via-blue-600 to-blue-700 text-white px-3 sm:px-4 md:px-6 py-3 sm:py-4 shadow-lg gap-2 sm:gap-4">
-            
-            <div className="flex items-center gap-2">
-                <img src="/image.png" alt="Styler Logo" className="h-10 w-10 object-contain" />
-                
-            </div>
+import { Link } from "react-router-dom";
+import * as Clerk from "@clerk/clerk-react";
+
+export function Navbar() {
+  return (
+    <header className="bg-surface/90 backdrop-blur-md border-b border-outline-variant/10 shadow-sm shadow-secondary/5 docked full-width top-0 sticky z-50">
+      <div className="flex justify-between items-center w-full px-gutter h-28 max-w-container-max mx-auto">
+        <Link to="/" className="font-headline-lg text-headline-lg text-primary tracking-tighter hover:scale-105 transition-transform duration-300 block py-2">
+          Botanical Merge
+        </Link>
+        <nav className="hidden md:flex items-center gap-lg">
+          <Link to="/studio" className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-300">Studio</Link>
+          <a className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-300" href="#">Gallery</a>
+          <a className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-300" href="#">Resources</a>
+        </nav>
         
-            <div className="flex-1 text-center">
-                <h1 className="text-sm sm:text-base md:text-xl font-bold tracking-wide animate-pulse line-clamp-1">Art Style Image Transformation</h1>
-            </div>
-            
-            <div className="flex items-center">
-                {/* UserButton removed */}
-            </div>
+        <div className="flex items-center">
+          <Clerk.SignedOut>
+            <Link to="/signin" className="px-md py-sm bg-primary text-on-primary font-label-md text-label-md rounded-lg hover:bg-primary-container transition-all active:scale-95">
+              Sign In
+            </Link>
+          </Clerk.SignedOut>
+          <Clerk.SignedIn>
+            <Clerk.UserButton afterSignOutUrl="/" />
+          </Clerk.SignedIn>
         </div>
-        
-    );
+      </div>
+    </header>
+  );
+}
+
+export function Footer() {
+  return (
+    <footer className="bg-surface-container-low border-t border-outline-variant/20 full-width mt-xl">
+      <div className="flex flex-col md:flex-row justify-between items-center w-full px-gutter py-lg max-w-container-max mx-auto gap-base">
+        <div className="flex flex-col items-center md:items-start gap-xs">
+          <Link to="/" className="font-headline-sm text-headline-sm text-primary font-bold">Botanical Merge</Link>
+          <p className="font-label-sm text-label-sm text-on-surface-variant">© 2024 Botanical Merge Studio. Crafted for intentional creators.</p>
+        </div>
+        <nav className="flex gap-md">
+          <a className="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-colors focus:ring-2 focus:ring-primary/20" href="#">Privacy Policy</a>
+          <a className="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-colors focus:ring-2 focus:ring-primary/20" href="#">Terms of Service</a>
+          <a className="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-colors focus:ring-2 focus:ring-primary/20" href="#">Support</a>
+        </nav>
+      </div>
+    </footer>
+  );
 }

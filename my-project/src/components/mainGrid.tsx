@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import React, { useState } from "react";
 import type { ChangeEvent } from "react";
 
@@ -14,12 +13,10 @@ const Grid: React.FC = () => {
     const handlePhoto1Change = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-
         if (!file.type.startsWith("image/")) {
             setMessage("Please select a valid image file");
             return;
         }
-
         setPhoto1(file);
         setPreview1(URL.createObjectURL(file));
         setMessage("");
@@ -28,12 +25,10 @@ const Grid: React.FC = () => {
     const handlePhoto2Change = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-
         if (!file.type.startsWith("image/")) {
             setMessage("Please select a valid image file");
             return;
         }
-
         setPhoto2(file);
         setPreview2(URL.createObjectURL(file));
         setMessage("");
@@ -48,9 +43,8 @@ const Grid: React.FC = () => {
         try {
             setIsLoading(true);
             setMergedImage(null);
-
-            // Step 1: Upload both images
             setMessage("🔄 Uploading images...");
+            
             const formData = new FormData();
             formData.append("style_image", photo1);
             formData.append("content_image", photo2);
@@ -67,7 +61,6 @@ const Grid: React.FC = () => {
 
             const { session_id } = await uploadResponse.json();
 
-            // Step 2: Process style transfer
             setMessage("🔄 Processing style transfer...");
             const processForm = new FormData();
             processForm.append("session_id", session_id);
@@ -84,7 +77,6 @@ const Grid: React.FC = () => {
 
             const { result_base64 } = await processResponse.json();
 
-            // Step 3: Display result
             if (result_base64) {
                 setMergedImage(`data:image/png;base64,${result_base64}`);
                 setMessage("✅ Style transfer completed!");
@@ -98,123 +90,108 @@ const Grid: React.FC = () => {
         }
     };
 
+    const handleDownload = () => {
+        if (mergedImage) {
+            const link = document.createElement("a");
+            link.href = mergedImage;
+            link.download = "botanical-merge-result.png";
+            link.click();
+        }
+    };
+
     return (
-        <div className="bg-linear-to-br from-blue-50 to-blue-100 flex-1 overflow-auto">
-            <div className="w-full flex flex-col gap-3 sm:gap-4 md:gap-6 p-3 sm:p-4 md:p-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
-                    <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-md sm:shadow-lg p-3 sm:p-4 md:p-6 border-2 border-blue-200 hover:border-blue-400 transition-all duration-300 hover:shadow-lg sm:hover:shadow-xl transform hover:-translate-y-0.5 sm:hover:-translate-y-1 flex flex-col">
-                        <h3 className="text-base sm:text-lg md:text-lg font-semibold text-blue-700 mb-2 sm:mb-3 md:mb-4 flex items-center gap-2">
-                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            <span className="truncate">Style image</span>
-                        </h3>
-                        <label className="flex-1 cursor-pointer flex">
-                            <div className="border-2 border-dashed border-blue-300 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-4 hover:border-blue-500 transition-colors bg-blue-50 hover:bg-blue-100 flex items-center justify-center w-full min-h-40 sm:min-h-48 md:min-h-52">
-                                {preview1 ? (
-                                    <img
-                                        src={preview1}
-                                        alt="Preview 1"
-                                        className="max-h-48 sm:max-h-60 md:max-h-80 max-w-full object-contain rounded-lg animate-fadeIn"
-                                    />
-                                ) : (
-                                    <div className="text-center p-2">
-                                        <svg className="mx-auto h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-blue-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                        <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-blue-600 font-medium">Click to upload</p>
-                                        <p className="text-xs text-blue-400">PNG, JPG up to 10MB</p>
-                                    </div>
-                                )}
-                            </div>
-                            <input type="file" accept="image/*" onChange={handlePhoto1Change} className="hidden" />
-                        </label>
-                    </div>
-
-                    <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-md sm:shadow-lg p-3 sm:p-4 md:p-6 border-2 border-blue-200 hover:border-blue-400 transition-all duration-300 hover:shadow-lg sm:hover:shadow-xl transform hover:-translate-y-0.5 sm:hover:-translate-y-1 flex flex-col">
-                        <h3 className="text-base sm:text-lg md:text-lg font-semibold text-blue-700 mb-2 sm:mb-3 md:mb-4 flex items-center gap-2">
-                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            <span className="truncate">Content image</span>
-                        </h3>
-                        <label className="flex-1 cursor-pointer flex">
-                            <div className="border-2 border-dashed border-blue-300 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-4 hover:border-blue-500 transition-colors bg-blue-50 hover:bg-blue-100 flex items-center justify-center w-full min-h-40 sm:min-h-48 md:min-h-52">
-                                {preview2 ? (
-                                    <img
-                                        src={preview2}
-                                        alt="Preview 2"
-                                        className="max-h-48 sm:max-h-60 md:max-h-80 max-w-full object-contain rounded-lg animate-fadeIn"
-                                    />
-                                ) : (
-                                    <div className="text-center p-2">
-                                        <svg className="mx-auto h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-blue-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                        <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-blue-600 font-medium">Click to upload</p>
-                                        <p className="text-xs text-blue-400">PNG, JPG up to 10MB</p>
-                                    </div>
-                                )}
-                            </div>
-                            <input type="file" accept="image/*" onChange={handlePhoto2Change} className="hidden" />
-                        </label>
-                    </div>
-                </div>
-
-                <div className="text-center py-2 sm:py-3 md:py-4">
-                    <Button 
-                        onClick={handleMerge}
-                        className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 sm:px-6 md:px-8 py-2 sm:py-3 md:py-6 text-xs sm:text-base md:text-lg font-semibold rounded-lg sm:rounded-xl md:rounded-xl shadow-md sm:shadow-lg hover:shadow-lg sm:hover:shadow-xl transform hover:scale-100 sm:hover:scale-105 transition-all duration-300 w-full sm:w-auto"
-                        disabled={!photo1 || !photo2 || isLoading}
-                    >
-                        {isLoading ? (
-                            <>
-                                <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 mr-1 sm:mr-2 inline animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                                Merging...
-                            </>
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-lg items-start">
+            {/* Input Zone */}
+            <div className="lg:col-span-5 flex flex-col gap-md">
+                <div className="flex flex-col gap-base">
+                    <span className="font-label-sm text-label-sm uppercase text-outline tracking-widest px-xs">Canvas Alpha</span>
+                    <label className="group relative aspect-4/3 bg-surface-container-low border-2 border-dashed border-outline-variant rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-primary/40 hover:bg-surface-container transition-all duration-300 shadow-sm overflow-hidden">
+                        {preview1 ? (
+                            <img src={preview1} alt="Canvas Alpha" className="w-full h-full object-cover animate-fadeIn" />
                         ) : (
                             <>
-                                <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 mr-1 sm:mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                                </svg>
-                                Merge Images
+                                <span className="material-symbols-outlined text-outline group-hover:text-primary transition-colors mb-sm" style={{ fontSize: "48px" }}>filter_vintage</span>
+                                <p className="font-label-md text-label-md text-on-surface-variant">Image 1</p>
+                                <p className="font-label-sm text-label-sm text-outline">Drop or Click to Upload</p>
                             </>
                         )}
-                    </Button>
+                        <input type="file" accept="image/*" onChange={handlePhoto1Change} className="hidden" />
+                    </label>
                 </div>
 
-                <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-md sm:shadow-lg p-3 sm:p-4 md:p-6 border-2 border-blue-300 min-h-32 sm:min-h-40 md:min-h-50 animate-fadeIn flex flex-col">
-                    <h3 className="text-base sm:text-lg md:text-lg font-semibold text-blue-700 mb-2 sm:mb-3 md:mb-4 flex items-center gap-2">
-                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span className="truncate">Merged Result</span>
-                    </h3>
-                    <div className="border-2 border-dashed border-blue-200 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 min-h-28 sm:min-h-32 md:min-h-44 flex items-center justify-center bg-blue-50 flex-1">
-                        {mergedImage ? (
-                            <img
-                                src={mergedImage}
-                                alt="Merged Result"
-                                className="max-h-48 sm:max-h-60 md:max-h-80 max-w-full object-contain rounded-lg animate-fadeIn"
-                            />
-                        ) : message ? (
-                            <p className={`text-xs sm:text-sm md:text-sm font-medium text-center wrap-break-word ${
-                                message.includes('success') ? 'text-green-600' : 
-                                message.includes('error') || message.includes('failed') ? 'text-red-600' : 
-                                message.includes('Merging') ? 'text-blue-600' :
-                                'text-blue-600'
-                            }`}>{message}</p>
+                <div className="flex flex-col gap-base">
+                    <span className="font-label-sm text-label-sm uppercase text-outline tracking-widest px-xs">Canvas Beta</span>
+                    <label className="group relative aspect-4/3 bg-surface-container-low border-2 border-dashed border-outline-variant rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-primary/40 hover:bg-surface-container transition-all duration-300 shadow-sm overflow-hidden">
+                        {preview2 ? (
+                            <img src={preview2} alt="Canvas Beta" className="w-full h-full object-cover animate-fadeIn" />
                         ) : (
-                            <p className="text-blue-400 text-xs sm:text-sm text-center">Result will appear here after merging</p>
+                            <>
+                                <span className="material-symbols-outlined text-outline group-hover:text-primary transition-colors mb-sm" style={{ fontSize: "48px" }}>potted_plant</span>
+                                <p className="font-label-md text-label-md text-on-surface-variant">Image 2</p>
+                                <p className="font-label-sm text-label-sm text-outline">Drop or Click to Upload</p>
+                            </>
                         )}
+                        <input type="file" accept="image/*" onChange={handlePhoto2Change} className="hidden" />
+                    </label>
+                </div>
+
+                <button 
+                    onClick={handleMerge}
+                    disabled={!photo1 || !photo2 || isLoading}
+                    className="w-full mt-base py-md px-lg bg-primary text-on-primary font-headline-sm text-headline-sm rounded-xl shadow-lg shadow-primary/10 hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-sm group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                >
+                    <span className="material-symbols-outlined" style={{ fontVariationSettings: '"FILL" 1' }}>{isLoading ? 'autorenew' : 'auto_awesome'}</span>
+                    <span>{isLoading ? 'Merging...' : 'Merge Images'}</span>
+                </button>
+                {message && <p className="text-center font-label-sm mt-2">{message}</p>}
+            </div>
+
+            {/* Preview Zone */}
+            <div className="lg:col-span-7">
+                <div className="flex flex-col gap-base">
+                    <span className="font-label-sm text-label-sm uppercase text-outline tracking-widest px-xs">Botanical Result</span>
+                    <div className="bg-surface-container-highest rounded-xl p-md shadow-sm border border-outline-variant/10 min-h-125 flex flex-col items-center justify-center relative overflow-hidden">
+                        {/* Decorative Leaf Patterns */}
+                        <div className="absolute top-4 left-4 opacity-10 pointer-events-none">
+                            <span className="material-symbols-outlined" style={{ fontSize: "80px" }}>eco</span>
+                        </div>
+                        <div className="absolute bottom-4 right-4 opacity-10 pointer-events-none">
+                            <span className="material-symbols-outlined" style={{ fontSize: "80px" }}>forest</span>
+                        </div>
+
+                        {/* Result / Placeholder */}
+                        <div className="mat-border rounded-xl shadow-lg max-w-full overflow-hidden bg-surface relative min-h-75 w-full flex items-center justify-center">
+                            {mergedImage ? (
+                                <img src={mergedImage} alt="Botanical Result" className="w-full h-auto animate-fadeIn" />
+                            ) : (
+                                <>
+                                    <img 
+                                        alt="Preview Placeholder" 
+                                        className="w-full h-auto opacity-30 grayscale sepia" 
+                                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuC72FqiZJhfr0fmbG6yx5-8WTg_eXOp5oUc6abtYDbpToFHOjXiK3b4IJ3SFg5L0OAW-GpaAFRoruBUCnJH1dUVCb5u6CNK0c7nHk9CaEQDPgZupGVqh_eaGMjTvBAjPi89J8C0C6R2B33IJiElsxpX1py32mwP3gyUS5tgStBkGmcjsvwlIL9cVvApFWsekuR1ulB3WOqoW6Dx_hzqP3OvirnKT4iQQrMrTGYjlXDn1UFjLT-ij2OT0EnZOjhi6u1vaADzYE2EMnA"
+                                    />
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-lg">
+                                        <span className="material-symbols-outlined text-primary/20 mb-md" style={{ fontSize: "64px" }}>temp_preferences_custom</span>
+                                        <p className="font-headline-sm text-headline-sm text-on-surface-variant/40">Your creation will appear here</p>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Download Action */}
+                        <button 
+                            onClick={handleDownload}
+                            disabled={!mergedImage}
+                            className={`mt-lg px-xl py-md bg-secondary text-on-secondary font-label-md text-label-md rounded-full shadow-md hover:bg-secondary/90 hover:scale-105 transition-all flex items-center gap-base ${!mergedImage ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                            <span className="material-symbols-outlined">download</span>
+                            Download Merged Image
+                        </button>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
     );
-}
-
+};
 
 export default Grid;
