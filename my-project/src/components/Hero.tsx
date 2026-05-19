@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Logo } from "./Logo";
 
 export function Hero() {
   return (
@@ -13,7 +14,7 @@ export function Hero() {
         to="/studio" 
         className="inline-flex items-center gap-sm px-xl py-md bg-primary text-on-primary font-label-md text-label-md rounded-lg hover:bg-primary-container transition-all active:scale-95 shadow-lg shadow-primary/10"
       >
-        <span className="material-symbols-outlined">filter_vintage</span>
+        <Logo size={24} className="rounded-sm" />
         Enter the Studio
       </Link>
     </section>

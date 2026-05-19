@@ -1,6 +1,7 @@
 import { useSignUp } from "@clerk/clerk-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Logo } from "@/components/Logo";
 
 export default function SignUpPage() {
   const { isLoaded, signUp } = useSignUp();
@@ -69,8 +70,8 @@ export default function SignUpPage() {
         <div className="w-full max-w-120 bg-surface-container-lowest border border-outline-variant/20 rounded-3xl ambient-shadow p-8 md:p-12 my-8 relative z-10 animate-fadeIn">
           {/* Brand & Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/5 rounded-2xl mb-4">
-              <span className="material-symbols-outlined text-primary text-[32px]">potted_plant</span>
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/5 mb-4">
+              <Logo size={64} className="rounded-xl shadow-sm" />
             </div>
             <h1 className="font-headline-md text-headline-md text-primary mb-2">Begin Your Studio</h1>
             <p className="font-body-md text-on-surface-variant max-w-75 mx-auto">Create an account to save your intentional creations.</p>

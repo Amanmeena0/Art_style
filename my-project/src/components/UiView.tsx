@@ -1,12 +1,14 @@
 import { Link } from "react-router-dom";
 import * as Clerk from "@clerk/clerk-react";
+import { Logo } from "./Logo";
 
 export function Navbar() {
   return (
     <header className="bg-surface/90 backdrop-blur-md border-b border-outline-variant/10 shadow-sm shadow-secondary/5 docked full-width top-0 sticky z-50">
       <div className="flex justify-between items-center w-full px-gutter h-28 max-w-container-max mx-auto">
-        <Link to="/" className="font-headline-lg text-headline-lg text-primary tracking-tighter hover:scale-105 transition-transform duration-300 block py-2">
-          Botanical Merge
+        <Link to="/" className="flex items-center gap-3 hover:scale-105 transition-transform duration-300 py-2">
+          <Logo size={48} className="rounded-xl shadow-sm" />
+          <span className="font-headline-lg text-headline-lg text-primary tracking-tighter">Botanical Merge</span>
         </Link>
           <nav className="hidden md:flex items-center gap-lg">
             <Link to="/studio" className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-300">Studio</Link>
@@ -37,7 +39,10 @@ export function Footer() {
     <footer className="bg-surface-container-low border-t border-outline-variant/20 full-width mt-xl">
       <div className="flex flex-col md:flex-row justify-between items-center w-full px-gutter py-lg max-w-container-max mx-auto gap-base">
         <div className="flex flex-col items-center md:items-start gap-xs">
-          <Link to="/" className="font-headline-sm text-headline-sm text-primary font-bold">Botanical Merge</Link>
+          <Link to="/" className="flex items-center gap-2">
+            <Logo size={32} className="rounded-lg" />
+            <span className="font-headline-sm text-headline-sm text-primary font-bold">Botanical Merge</span>
+          </Link>
           <p className="font-label-sm text-label-sm text-on-surface-variant">© 2024 Botanical Merge Studio. Crafted for intentional creators.</p>
         </div>
         <nav className="flex gap-md">

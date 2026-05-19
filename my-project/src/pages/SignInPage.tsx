@@ -1,6 +1,7 @@
 import { useSignIn } from "@clerk/clerk-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Logo } from "@/components/Logo";
 
 export default function SignInPage() {
   const { isLoaded, signIn, setActive } = useSignIn();
@@ -65,7 +66,7 @@ export default function SignInPage() {
         <div className="w-full max-w-115 bg-surface-container-lowest rounded-3xl p-xl md:p-12 ambient-shadow border border-outline-variant/10 relative z-10 animate-fadeIn">
           <div className="text-center mb-12">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/5 mb-6">
-              <span className="material-symbols-outlined text-primary text-4xl">filter_vintage</span>
+              <Logo size={64} className="rounded-xl shadow-sm" />
             </div>
             <h1 className="font-headline-md text-headline-md text-primary mb-2">Welcome Back</h1>
             <p className="font-body-md text-on-surface-variant max-w-70 mx-auto">Enter your credentials to access your botanical studio.</p>
