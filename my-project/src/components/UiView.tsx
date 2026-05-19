@@ -8,16 +8,19 @@ export function Navbar() {
         <Link to="/" className="font-headline-lg text-headline-lg text-primary tracking-tighter hover:scale-105 transition-transform duration-300 block py-2">
           Botanical Merge
         </Link>
-        <nav className="hidden md:flex items-center gap-lg">
-          <Link to="/studio" className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-300">Studio</Link>
-          <a className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-300" href="#">Gallery</a>
-          <a className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-300" href="#">Resources</a>
-        </nav>
+          <nav className="hidden md:flex items-center gap-lg">
+            <Link to="/studio" className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-300">Studio</Link>
+            <a className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-300" href="#">Gallery</a>
+            <a className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-300" href="#">Resources</a>
+          </nav>
         
-        <div className="flex items-center">
+        <div className="flex items-center gap-md">
           <Clerk.SignedOut>
-            <Link to="/signin" className="px-md py-sm bg-primary text-on-primary font-label-md text-label-md rounded-lg hover:bg-primary-container transition-all active:scale-95">
+            <Link to="/signin" className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-300 px-md py-sm">
               Sign In
+            </Link>
+            <Link to="/signup" className="px-md py-sm bg-primary text-on-primary font-label-md text-label-md rounded-lg hover:bg-primary-container transition-all active:scale-95 shadow-lg shadow-primary/10">
+              Sign Up
             </Link>
           </Clerk.SignedOut>
           <Clerk.SignedIn>

@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import LandingPage from "@/pages/LandingPage";
 import StudioPage from "@/pages/StudioPage";
 import SignInPage from "@/pages/SignInPage";
+import SignUpPage from "@/pages/SignUpPage";
 import { SignedIn, SignedOut } from "@clerk/clerk-react";
 
 function App() {
@@ -21,6 +22,19 @@ function App() {
               </SignedIn>
               <SignedOut>
                 <SignInPage />
+              </SignedOut>
+            </>
+          } 
+        />
+        <Route 
+          path="/signup" 
+          element={
+            <>
+              <SignedIn>
+                <Navigate to="/studio" replace />
+              </SignedIn>
+              <SignedOut>
+                <SignUpPage />
               </SignedOut>
             </>
           } 

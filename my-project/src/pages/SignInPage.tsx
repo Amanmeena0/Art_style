@@ -62,74 +62,84 @@ export default function SignInPage() {
         </div>
 
         {/* Centered Sign-In Card */}
-        <div className="w-full max-w-md bg-surface-container-lowest rounded-xl p-lg md:p-xl ambient-shadow border border-outline-variant/10 relative z-10 animate-fadeIn">
-          <div className="text-center mb-xl">
-            <div className="flex justify-center mb-sm">
-              <span className="material-symbols-outlined text-primary text-4xl">energy_savings_leaf</span>
+        <div className="w-full max-w-115 bg-surface-container-lowest rounded-3xl p-xl md:p-12 ambient-shadow border border-outline-variant/10 relative z-10 animate-fadeIn">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/5 mb-6">
+              <span className="material-symbols-outlined text-primary text-4xl">filter_vintage</span>
             </div>
-            <h1 className="font-headline-md text-headline-md text-primary mb-xs">Botanical Merge</h1>
-            <p className="font-body-md text-on-surface-variant">Welcome back to your intentional studio.</p>
+            <h1 className="font-headline-md text-headline-md text-primary mb-2">Welcome Back</h1>
+            <p className="font-body-md text-on-surface-variant max-w-70 mx-auto">Enter your credentials to access your botanical studio.</p>
           </div>
 
-          <form className="space-y-md" onSubmit={handleSubmit}>
+          <form className="space-y-8" onSubmit={handleSubmit}>
             {/* Error Message */}
             {error && (
-              <div className="bg-error-container text-on-error-container p-3 rounded-lg text-sm font-label-md animate-shake">
+              <div className="bg-error-container text-on-error-container p-4 rounded-xl text-sm font-label-md animate-shake border border-error/10 flex items-center gap-2">
+                <span className="material-symbols-outlined text-sm">error</span>
                 {error}
               </div>
             )}
 
-            {/* Email Field */}
-            <div className="space-y-xs">
-              <label className="font-label-md text-label-md text-on-surface-variant block px-1" htmlFor="email">Email Address</label>
-              <div className="relative">
-                <input 
-                  className="w-full h-14 px-md bg-surface-container-low border-0 rounded-lg focus:ring-2 focus:ring-primary/20 focus:bg-surface-container placeholder:text-outline/50 transition-all duration-300 outline-none" 
-                  id="email" 
-                  placeholder="hello@creator.com" 
-                  type="email"
-                  value={emailAddress}
-                  onChange={(e) => setEmailAddress(e.target.value)}
-                  required
-                />
+            <div className="space-y-6">
+              {/* Email Field */}
+              <div className="space-y-2">
+                <label className="font-label-md text-label-md text-on-surface-variant block px-1" htmlFor="email">Email Address</label>
+                <div className="relative group">
+                  <input 
+                    className="w-full h-14 px-md bg-surface border border-outline-variant/30 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-surface-container-lowest placeholder:text-outline/30 transition-all duration-300 outline-none font-body-md" 
+                    id="email" 
+                    placeholder="e.g. clara@botany.com" 
+                    type="email"
+                    value={emailAddress}
+                    onChange={(e) => setEmailAddress(e.target.value)}
+                    required
+                  />
+                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-outline/30 group-focus-within:text-primary/40 transition-colors">
+                    <span className="material-symbols-outlined text-xl">mail</span>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            {/* Password Field */}
-            <div className="space-y-xs">
-              <div className="flex justify-between items-center px-1">
-                <label className="font-label-md text-label-md text-on-surface-variant block" htmlFor="password">Password</label>
-                <Link className="font-label-sm text-label-sm text-secondary hover:text-secondary-container transition-colors" to="/forgot-password">Forgot Password?</Link>
-              </div>
-              <div className="relative">
-                <input 
-                  className="w-full h-14 px-md bg-surface-container-low border-0 rounded-lg focus:ring-2 focus:ring-primary/20 focus:bg-surface-container placeholder:text-outline/50 transition-all duration-300 outline-none" 
-                  id="password" 
-                  placeholder="••••••••" 
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
+              {/* Password Field */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center px-1">
+                  <label className="font-label-md text-label-md text-on-surface-variant block" htmlFor="password">Password</label>
+                  <Link className="font-label-sm text-label-sm text-secondary hover:text-secondary-container transition-colors font-semibold" to="/forgot-password">Forgot?</Link>
+                </div>
+                <div className="relative group">
+                  <input 
+                    className="w-full h-14 px-md bg-surface border border-outline-variant/30 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-surface-container-lowest placeholder:text-outline/30 transition-all duration-300 outline-none font-body-md" 
+                    id="password" 
+                    placeholder="••••••••" 
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-outline/30 group-focus-within:text-primary/40 transition-colors">
+                    <span className="material-symbols-outlined text-xl">lock</span>
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Submit Button */}
             <button 
-              className="w-full h-14 bg-primary text-on-primary font-label-md text-label-md rounded-full inner-glow flex items-center justify-center gap-sm hover:bg-primary-container hover:text-on-primary-container transition-all duration-300 transform active:scale-[0.98] shadow-lg shadow-primary/10 disabled:opacity-50 disabled:cursor-not-allowed" 
+              className="w-full h-14 bg-primary text-on-primary font-label-md text-label-md rounded-xl inner-glow flex items-center justify-center gap-3 hover:bg-primary-container hover:text-on-primary-container transition-all duration-500 transform active:scale-[0.97] shadow-lg shadow-primary/10 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden relative" 
               type="submit"
               disabled={isLoading}
             >
-              {isLoading ? "Signing In..." : "Sign In"}
-              <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+              <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite] pointer-events-none"></div>
+              <span className="relative z-10">{isLoading ? "Verifying..." : "Sign In to Studio"}</span>
+              <span className="material-symbols-outlined text-[20px] relative z-10 group-hover:translate-x-1 transition-transform">arrow_forward</span>
             </button>
           </form>
 
           {/* Bottom Link */}
-          <div className="mt-xl text-center">
+          <div className="mt-10 text-center border-t border-outline-variant/10 pt-8">
             <p className="font-label-md text-label-md text-on-surface-variant">
               New to the studio? 
-              <Link className="text-primary font-bold hover:underline decoration-2 underline-offset-4 ml-1" to="/signup">Create an Account</Link>
+              <Link className="text-primary font-bold hover:text-primary-container transition-colors ml-2" to="/signup">Sign Up</Link>
             </p>
           </div>
         </div>
