@@ -1,11 +1,13 @@
 import { useSignUp } from "@clerk/clerk-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 
 export default function SignUpPage() {
   const { isLoaded, signUp } = useSignUp();
+  const navigate = useNavigate();
   const [emailAddress, setEmailAddress] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [error, setError] = useState("");
@@ -19,6 +21,8 @@ export default function SignUpPage() {
     setIsLoading(true);
     setError("");
 
+    console.log("Starting signup creation for:", emailAddress);
+
     try {
       // Create user with name in publicMetadata or handle via Clerk's firstName/lastName split
       const nameParts = fullName.trim().split(" ");
@@ -27,21 +31,26 @@ export default function SignUpPage() {
 
       await signUp.create({
         emailAddress,
+        username,
         password,
         firstName,
         lastName,
       });
 
+      console.log("Signup object created successfully");
+
       // Send the email verification code
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+      console.log("OTP verification code sent to:", emailAddress);
 
-      // In a real app, you'd redirect to a verification page. 
-      // For simplicity in this mockup, we'll assume direct completion or let the user know.
-      alert("Verification email sent! Please check your inbox.");
-      // navigate("/verify-email"); 
+      // Navigate to OTP verification page
+      navigate("/verify-otp");
     } catch (err: unknown) {
+      console.error("Signup error:", err);
       if (err instanceof Error) {
-        setError(err.message || "Something went wrong. Please try again.");
+        // @ts-ignore - Clerk errors have a specific structure
+        const clerkError = (err as any).errors?.[0]?.message || err.message;
+        setError(clerkError || "Something went wrong. Please try again.");
       } else {
         setError("Something went wrong. Please try again.");
       }
@@ -98,6 +107,23 @@ export default function SignUpPage() {
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Username Field */}
+              <div className="space-y-2">
+                <label className="font-label-md text-label-md text-on-surface-variant block px-1" htmlFor="username">Username</label>
+                <div className="relative group">
+                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline/40 group-focus-within:text-primary transition-colors text-xl">alternate_email</span>
+                  <input 
+                    className="w-full pl-12 pr-4 h-14 bg-surface border border-outline-variant/30 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all duration-300 placeholder:text-outline/30 font-body-md" 
+                    id="username" 
+                    placeholder="evelyn_green" 
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     required
                   />
                 </div>

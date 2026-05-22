@@ -27,7 +27,7 @@ export default function SignInPage() {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        navigate("/studio");
+        navigate("/dashboard");
       } else {
         /* secondary strategy may be necessary */
         console.log(result);
